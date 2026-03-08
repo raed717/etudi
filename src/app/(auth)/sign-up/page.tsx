@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { signUp } from "@/server/actions/auth";
 import type { AuthState } from "@/server/actions/auth";
 import Link from "next/link";
@@ -10,6 +10,7 @@ const initialState: AuthState = { error: null };
 export default function SignUpPage() {
   const [state, formAction, isPending] = useActionState(signUp, initialState);
   const nameRef = useRef<HTMLInputElement>(null);
+  const [role, setRole] = useState<"teacher" | "student">("teacher");
 
   useEffect(() => {
     nameRef.current?.focus();
@@ -73,6 +74,52 @@ export default function SignUpPage() {
 
       {/* Form */}
       <form action={formAction} className="auth-form" noValidate>
+        {/* Role selector */}
+        <div className="auth-field">
+          <label className="auth-label">I am a</label>
+          <div className="role-selector">
+            <input
+              type="radio"
+              id="role_teacher"
+              name="role"
+              value="teacher"
+              checked={role === "teacher"}
+              onChange={(e) => setRole(e.target.value as "teacher")}
+              className="role-radio"
+            />
+            <label htmlFor="role_teacher" className="role-option">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <rect x="2.5" y="4" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M2 6.5h14M5.5 2v4M12.5 2v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <span>
+                <strong>Teacher</strong>
+                <small>Create and manage classes</small>
+              </span>
+            </label>
+
+            <input
+              type="radio"
+              id="role_student"
+              name="role"
+              value="student"
+              checked={role === "student"}
+              onChange={(e) => setRole(e.target.value as "student")}
+              className="role-radio"
+            />
+            <label htmlFor="role_student" className="role-option">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="6.5" r="3.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M2 16.5c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+              </svg>
+              <span>
+                <strong>Student</strong>
+                <small>Join groups and access lessons</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div className="auth-field">
           <label htmlFor="full_name" className="auth-label">Full name</label>
           <input
@@ -82,7 +129,7 @@ export default function SignUpPage() {
             type="text"
             autoComplete="name"
             required
-            placeholder="Ms. Elena Torres"
+            placeholder={role === "teacher" ? "Ms. Elena Torres" : "Ahmed Ali"}
             className="auth-input"
             disabled={isPending}
           />
@@ -412,6 +459,68 @@ function AuthFormStyles() {
         background: rgba(30,58,47,0.07);
         display: flex; align-items: center; justify-content: center;
         margin-bottom: 8px;
+      }
+
+      /* ── Role selector ── */
+      .role-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .role-radio {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .role-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1.5px solid rgba(30,58,47,0.12);
+        border-radius: 12px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: var(--font-body);
+      }
+      .role-option svg {
+        color: var(--forest);
+        opacity: 0.4;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .role-option span {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+      }
+      .role-option strong {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--forest);
+      }
+      .role-option small {
+        font-size: 0.76rem;
+        color: var(--forest);
+        opacity: 0.5;
+      }
+      .role-option:hover {
+        border-color: rgba(30,58,47,0.24);
+        background: rgba(30,58,47,0.02);
+      }
+      .role-radio:checked + .role-option {
+        border-color: var(--forest-mid);
+        background: rgba(30,58,47,0.04);
+        box-shadow: 0 0 0 3px rgba(30,58,47,0.08);
+      }
+      .role-radio:checked + .role-option svg {
+        color: var(--forest-mid);
+        opacity: 1;
+      }
+      .role-radio:checked + .role-option strong {
+        color: var(--forest-mid);
       }
     `}</style>
   );

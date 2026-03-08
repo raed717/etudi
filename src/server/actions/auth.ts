@@ -22,14 +22,19 @@ export async function signIn(
     return { error: "Email and password are required." };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     return { error: error.message };
   }
 
+  const role = data.user?.user_metadata?.role as string | undefined;
+
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect(role === "student" ? "/student-dashboard" : "/dashboard");
 }
 
 export async function signUp(
@@ -41,6 +46,7 @@ export async function signUp(
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("full_name") as string;
+  const role = (formData.get("role") as string) || "teacher";
 
   if (!email || !password || !fullName) {
     return { error: "Name, email, and password are required." };
@@ -50,13 +56,18 @@ export async function signUp(
     return { error: "Password must be at least 8 characters." };
   }
 
+  // Validate role
+  if (role !== "teacher" && role !== "student") {
+    return { error: "Invalid role selected." };
+  }
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
-        role: "teacher",
+        role,
       },
     },
   });

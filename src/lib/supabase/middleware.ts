@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Supabase middleware — refreshes the session cookie on every request.
- * Must be called from the root middleware.ts.
+ * Routes students and teachers to their respective dashboards.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -34,25 +34,50 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect dashboard routes
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/sign-in") &&
-    !request.nextUrl.pathname.startsWith("/sign-up") &&
-    !request.nextUrl.pathname.startsWith("/forgot-password") &&
-    request.nextUrl.pathname.startsWith("/dashboard")
-  ) {
+  const pathname = request.nextUrl.pathname;
+  const isAuthPage =
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up") ||
+    pathname.startsWith("/forgot-password");
+
+  const isTeacherArea =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/classes") ||
+    pathname.startsWith("/profile");
+
+  const isStudentArea = pathname.startsWith("/student-dashboard");
+
+  const role = (user?.user_metadata?.role as string) ?? null;
+
+  // ── Unauthenticated users ──
+  if (!user) {
+    // Protect all dashboard routes
+    if (isTeacherArea || isStudentArea) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/sign-in";
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
+
+  // ── Authenticated users ──
+
+  // Redirect away from auth pages → correct dashboard
+  if (isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/sign-in";
+    url.pathname = role === "student" ? "/student-dashboard" : "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages
-  if (
-    user &&
-    (request.nextUrl.pathname.startsWith("/sign-in") ||
-      request.nextUrl.pathname.startsWith("/sign-up"))
-  ) {
+  // Prevent students from accessing teacher areas
+  if (role === "student" && isTeacherArea) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/student-dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // Prevent teachers from accessing student areas
+  if (role !== "student" && isStudentArea) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

@@ -116,7 +116,7 @@ export function UserAvatar({ user }: { user: NavbarUserData }) {
           </Link>
 
           <Link
-            href="/dashboard"
+            href={user.role === "student" ? "/student-dashboard" : "/dashboard"}
             className="ua-item"
             role="menuitem"
             onClick={() => setOpen(false)}
