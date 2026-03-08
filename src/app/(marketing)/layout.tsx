@@ -1,5 +1,7 @@
 // (marketing) route group layout
-// Wraps landing page, pricing, about, etc.
+// Wraps secondary marketing pages like /pricing, /about, etc.
+import { Navbar } from "@/components/layout";
+import { Footer } from "@/components/landing/footer";
 
 export default function MarketingLayout({
   children,
@@ -7,12 +9,10 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header / Navbar will go here */}
-      <header className="border-b px-6 py-4" />
-      <main className="flex-1">{children}</main>
-      {/* Footer will go here */}
-      <footer className="border-t px-6 py-4" />
-    </div>
+    <>
+      <Navbar />
+      <main>{children}</main>
+      <Footer />
+    </>
   );
 }

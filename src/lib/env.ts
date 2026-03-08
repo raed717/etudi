@@ -14,9 +14,7 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
   APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
 
-  // Database — uncomment when wired up
-  // DATABASE_URL: requireEnv("DATABASE_URL"),
-
-  // Auth — uncomment when wired up
-  // AUTH_SECRET: requireEnv("AUTH_SECRET"),
+  // Supabase
+  SUPABASE_URL: requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+  SUPABASE_ANON_KEY: requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
 } as const;

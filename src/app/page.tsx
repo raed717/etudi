@@ -1,10 +1,23 @@
+import { Navbar } from "@/components/layout";
+import { Footer } from "@/components/landing/footer";
+import { HeroSection } from "@/components/landing/hero";
+import { MarqueeStrip } from "@/components/landing/marquee";
+import { FeaturesSection } from "@/components/landing/features";
+import { HowItWorksSection } from "@/components/landing/how-it-works";
+import { TestimonialsSection } from "@/components/landing/testimonials";
+import { CtaSection } from "@/components/landing/footer";
+
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold">Welcome to etudi</h1>
-      <p className="mt-4 text-muted-foreground">
-        Your modern e-learning platform.
-      </p>
-    </main>
+    <>
+      <Navbar />
+      <HeroSection />
+      <MarqueeStrip />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <TestimonialsSection />
+      <CtaSection />
+      <Footer />
+    </>
   );
 }
