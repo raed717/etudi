@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { UserAvatar } from "./user-avatar";
+import type { NavbarUserData } from "./user-avatar";
 
-export function Navbar() {
+type NavbarProps = {
+  user?: NavbarUserData | null;
+};
+
+export function Navbar({ user }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -106,14 +112,20 @@ export function Navbar() {
           ))}
         </ul>
 
-        {/* Desktop CTA */}
+        {/* Desktop: auth area */}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }} className="hidden-mobile">
-          <a href="/sign-in" className="btn-secondary" style={{ padding: "10px 22px", fontSize: "0.88rem" }}>
-            Sign in
-          </a>
-          <a href="/sign-up" className="btn-primary" style={{ padding: "10px 22px", fontSize: "0.88rem" }}>
-            Get started free
-          </a>
+          {user ? (
+            <UserAvatar user={user} />
+          ) : (
+            <>
+              <a href="/sign-in" className="btn-secondary" style={{ padding: "10px 22px", fontSize: "0.88rem" }}>
+                Sign in
+              </a>
+              <a href="/sign-up" className="btn-primary" style={{ padding: "10px 22px", fontSize: "0.88rem" }}>
+                Get started free
+              </a>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -204,13 +216,38 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
-          <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
-            <a href="/sign-in" className="btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "12px 20px" }}>
-              Sign in
-            </a>
-            <a href="/sign-up" className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "12px 20px" }}>
-              Get started free
-            </a>
+
+          {/* Mobile auth area */}
+          <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap", alignItems: "center" }}>
+            {user ? (
+              <>
+                <a
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="btn-secondary"
+                  style={{ flex: 1, justifyContent: "center", padding: "12px 20px" }}
+                >
+                  My profile
+                </a>
+                <a
+                  href="/dashboard"
+                  onClick={() => setMenuOpen(false)}
+                  className="btn-primary"
+                  style={{ flex: 1, justifyContent: "center", padding: "12px 20px" }}
+                >
+                  Dashboard
+                </a>
+              </>
+            ) : (
+              <>
+                <a href="/sign-in" className="btn-secondary" style={{ flex: 1, justifyContent: "center", padding: "12px 20px" }}>
+                  Sign in
+                </a>
+                <a href="/sign-up" className="btn-primary" style={{ flex: 1, justifyContent: "center", padding: "12px 20px" }}>
+                  Get started free
+                </a>
+              </>
+            )}
           </div>
         </div>
       )}

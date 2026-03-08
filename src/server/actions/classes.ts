@@ -1,0 +1,229 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import type { Enums } from "@/types/supabase";
+
+// ─── Shared return type ──────────────────────────────────────
+
+export type ActionState = {
+  error: string | null;
+  success?: boolean;
+};
+
+// ─── Helpers ─────────────────────────────────────────────────
+
+async function getTeacherId(): Promise<string> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+  return user.id;
+}
+
+// ─── Classes ─────────────────────────────────────────────────
+
+export async function createClass(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const teacherId = await getTeacherId();
+
+  const name = (formData.get("name") as string)?.trim();
+  const gradeStr = formData.get("grade") as string;
+  const academicYear = (formData.get("academic_year") as string)?.trim();
+  const subjects = formData.getAll("subjects") as string[];
+
+  const grade = Number(gradeStr);
+  if (!name) return { error: "Class name is required." };
+  if (!grade || grade < 1 || grade > 6)
+    return { error: "Grade must be between 1 and 6." };
+  if (!academicYear) return { error: "Academic year is required." };
+
+  // Insert class
+  const { data: cls, error: clsErr } = await supabase
+    .from("classes")
+    .insert({ name, grade, academic_year: academicYear, teacher_id: teacherId })
+    .select("id")
+    .single();
+
+  if (clsErr) return { error: clsErr.message };
+
+  // Insert subjects (if any selected)
+  if (subjects.length > 0) {
+    const rows = subjects.map((s) => ({
+      class_id: cls.id,
+      subject: s as Enums<"subject">,
+    }));
+    const { error: subErr } = await supabase.from("class_subjects").insert(rows);
+    if (subErr) return { error: subErr.message };
+  }
+
+  revalidatePath("/classes", "page");
+  redirect(`/classes/${cls.id}`);
+}
+
+export async function updateClass(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const classId = formData.get("class_id") as string;
+  const name = (formData.get("name") as string)?.trim();
+  const gradeStr = formData.get("grade") as string;
+  const academicYear = (formData.get("academic_year") as string)?.trim();
+
+  const grade = Number(gradeStr);
+  if (!classId) return { error: "Missing class ID." };
+  if (!name) return { error: "Class name is required." };
+  if (!grade || grade < 1 || grade > 6)
+    return { error: "Grade must be between 1 and 6." };
+  if (!academicYear) return { error: "Academic year is required." };
+
+  const { error } = await supabase
+    .from("classes")
+    .update({ name, grade, academic_year: academicYear })
+    .eq("id", classId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/classes/${classId}`, "page");
+  redirect(`/classes/${classId}`);
+}
+
+export async function deleteClass(classId: string): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const { error } = await supabase.from("classes").delete().eq("id", classId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/classes", "page");
+  redirect("/classes");
+}
+
+// ─── Subjects ────────────────────────────────────────────────
+
+export async function addSubject(
+  classId: string,
+  subject: Enums<"subject">,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const { error } = await supabase
+    .from("class_subjects")
+    .insert({ class_id: classId, subject });
+
+  if (error) {
+    if (error.code === "23505") return { error: "Subject already added." };
+    return { error: error.message };
+  }
+
+  revalidatePath(`/classes/${classId}`, "page");
+  return { error: null, success: true };
+}
+
+export async function removeSubject(
+  classId: string,
+  subject: Enums<"subject">,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const { error } = await supabase
+    .from("class_subjects")
+    .delete()
+    .eq("class_id", classId)
+    .eq("subject", subject);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/classes/${classId}`, "page");
+  return { error: null, success: true };
+}
+
+// ─── Groups ──────────────────────────────────────────────────
+
+export async function createGroup(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const classId = formData.get("class_id") as string;
+  const name = (formData.get("name") as string)?.trim();
+
+  if (!classId) return { error: "Missing class ID." };
+  if (!name) return { error: "Group name is required." };
+
+  // join_code is auto-generated by the DB BEFORE INSERT trigger
+  const { error } = await supabase
+    .from("groups")
+    .insert({ class_id: classId, name });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/classes/${classId}`, "page");
+  redirect(`/classes/${classId}`);
+}
+
+export async function deleteGroup(
+  groupId: string,
+  classId: string,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const { error } = await supabase.from("groups").delete().eq("id", groupId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/classes/${classId}`, "page");
+  redirect(`/classes/${classId}`);
+}
+
+// ─── Students (approve / reject) ─────────────────────────────
+
+export async function approveStudent(
+  memberId: string,
+  groupId: string,
+  classId: string,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const { error } = await supabase
+    .from("group_members")
+    .update({ status: "approved", approved_at: new Date().toISOString() })
+    .eq("id", memberId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/classes/${classId}/groups/${groupId}`, "page");
+  return { error: null, success: true };
+}
+
+export async function rejectStudent(
+  memberId: string,
+  groupId: string,
+  classId: string,
+): Promise<ActionState> {
+  const supabase = await createClient();
+  await getTeacherId();
+
+  const { error } = await supabase
+    .from("group_members")
+    .update({ status: "rejected" })
+    .eq("id", memberId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/classes/${classId}/groups/${groupId}`, "page");
+  return { error: null, success: true };
+}

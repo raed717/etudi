@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/layout";
+import { NavbarServer } from "@/components/layout";
 import { Footer } from "@/components/landing/footer";
 import { HeroSection } from "@/components/landing/hero";
 import { MarqueeStrip } from "@/components/landing/marquee";
@@ -10,7 +10,7 @@ import { CtaSection } from "@/components/landing/footer";
 export default function HomePage() {
   return (
     <>
-      <Navbar />
+      <NavbarServer />
       <HeroSection />
       <MarqueeStrip />
       <FeaturesSection />

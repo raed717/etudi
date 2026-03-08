@@ -14,6 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
+      class_subjects: {
+        Row: {
+          class_id: string
+          id: string
+          subject: Database["public"]["Enums"]["subject"]
+        }
+        Insert: {
+          class_id: string
+          id?: string
+          subject: Database["public"]["Enums"]["subject"]
+        }
+        Update: {
+          class_id?: string
+          id?: string
+          subject?: Database["public"]["Enums"]["subject"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_subjects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          academic_year: string
+          created_at: string
+          grade: number
+          id: string
+          name: string
+          teacher_id: string
+        }
+        Insert: {
+          academic_year?: string
+          created_at?: string
+          grade: number
+          id?: string
+          name?: string
+          teacher_id: string
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          grade?: number
+          id?: string
+          name?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          approved_at: string | null
+          group_id: string
+          id: string
+          joined_at: string
+          status: Database["public"]["Enums"]["membership_status"]
+          student_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          group_id: string
+          id?: string
+          joined_at?: string
+          status?: Database["public"]["Enums"]["membership_status"]
+          student_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          group_id?: string
+          id?: string
+          joined_at?: string
+          status?: Database["public"]["Enums"]["membership_status"]
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          class_id: string
+          created_at: string
+          id: string
+          join_code: string
+          name: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          id?: string
+          join_code?: string
+          name?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          id?: string
+          join_code?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -44,6 +179,27 @@ export type Database = {
         }
         Relationships: []
       }
+      students: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          full_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -52,7 +208,19 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      user_role: "teacher" | "admin"
+      membership_status: "pending" | "approved" | "rejected"
+      subject:
+        | "mathematics"
+        | "french"
+        | "arabic"
+        | "science"
+        | "history"
+        | "geography"
+        | "civic_ed"
+        | "art"
+        | "pe"
+        | "english"
+      user_role: "teacher" | "admin" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -180,7 +348,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_role: ["teacher", "admin"],
+      membership_status: ["pending", "approved", "rejected"],
+      subject: [
+        "mathematics",
+        "french",
+        "arabic",
+        "science",
+        "history",
+        "geography",
+        "civic_ed",
+        "art",
+        "pe",
+        "english",
+      ],
+      user_role: ["teacher", "admin", "student"],
     },
   },
 } as const
